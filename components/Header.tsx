@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { Sun, Moon, ChevronDown, User, LogOut, Settings, Flame, BarChart3, Bell, Clock, CalendarDays, Search } from 'lucide-react';
+import { Sun, Moon, ChevronDown, User, LogOut, Settings, Flame, BarChart3, Bell, Clock, CalendarDays, LayoutGrid } from 'lucide-react';
 
 interface HeaderProps {
   darkMode: boolean;
@@ -9,6 +9,8 @@ interface HeaderProps {
   userProfile?: { name: string; role: string; avatar?: string };
   onLoginClick: () => void;
   onLogoutClick: () => void;
+  showBackButton?: boolean;
+  onBackToMenu?: () => void;
 }
 
 const Header: React.FC<HeaderProps> = ({ 
@@ -17,7 +19,9 @@ const Header: React.FC<HeaderProps> = ({
   isLoggedIn, 
   userProfile, 
   onLoginClick,
-  onLogoutClick 
+  onLogoutClick,
+  showBackButton,
+  onBackToMenu
 }) => {
   const [currentTime, setCurrentTime] = useState(new Date());
 
@@ -55,26 +59,49 @@ const Header: React.FC<HeaderProps> = ({
           {/* Decor: Top highlight */}
           <div className="absolute top-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-indigo-500/30 to-transparent"></div>
 
-          {/* LEFT: Branding & Organization */}
-          <div className="flex items-center gap-4">
-              <div className="relative group cursor-pointer">
-                  <div className="absolute -inset-3 bg-indigo-500/20 rounded-full blur-md opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-                  <div className="relative w-12 h-12 rounded-xl bg-gradient-to-br from-slate-900 to-indigo-900 dark:from-indigo-600 dark:to-blue-700 text-white flex items-center justify-center shadow-lg shadow-indigo-900/20 ring-1 ring-black/5 dark:ring-white/20 group-hover:scale-105 transition-transform duration-300">
-                      <Flame size={24} className="animate-pulse-slow text-orange-400" fill="currentColor" fillOpacity={1} strokeWidth={1.5} />
+          {/* LEFT: Branding & Navigation */}
+          <div className="flex items-center gap-6">
+              {/* Logo Section */}
+              <div className="flex items-center gap-4">
+                  <div className="relative group cursor-pointer">
+                      <div className="absolute -inset-3 bg-indigo-500/20 rounded-full blur-md opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+                      <div className="relative w-12 h-12 rounded-xl bg-gradient-to-br from-slate-900 to-indigo-900 dark:from-indigo-600 dark:to-blue-700 text-white flex items-center justify-center shadow-lg shadow-indigo-900/20 ring-1 ring-black/5 dark:ring-white/20 group-hover:scale-105 transition-transform duration-300">
+                          <Flame size={24} className="animate-pulse-slow text-orange-400" fill="currentColor" fillOpacity={1} strokeWidth={1.5} />
+                      </div>
+                  </div>
+                  <div className="flex flex-col justify-center hidden sm:flex">
+                      <div className="text-[10px] font-extrabold text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em] leading-tight mb-0.5">
+                          Tri Viet Biogen
+                      </div>
+                      <h1 className="text-xl font-black text-slate-800 dark:text-white uppercase tracking-tight leading-none flex items-center gap-1">
+                          Boiler <span className="text-indigo-600 dark:text-indigo-400">KPI</span>
+                      </h1>
                   </div>
               </div>
-              <div className="flex flex-col justify-center">
-                  <div className="text-[10px] font-extrabold text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em] leading-tight mb-0.5">
-                      Tri Viet Biogen
-                  </div>
-                  <h1 className="text-xl font-black text-slate-800 dark:text-white uppercase tracking-tight leading-none flex items-center gap-1">
-                      Boiler <span className="text-indigo-600 dark:text-indigo-400">KPI</span>
-                  </h1>
-              </div>
+
+              {/* Back to Menu Button (Circular Style) */}
+              {showBackButton && (
+                <>
+                  <div className="h-8 w-px bg-slate-200 dark:bg-white/10 hidden lg:block"></div>
+                  <button 
+                    onClick={onBackToMenu}
+                    className="relative group w-11 h-11 flex items-center justify-center rounded-full transition-all duration-500 hover:scale-110 active:scale-95 shadow-md hover:shadow-xl hover:shadow-indigo-500/20"
+                    title="Quay lại menu chọn vị trí"
+                  >
+                    {/* Conic Gradient Ring mimicking the main menu colors */}
+                    <div className="absolute inset-0 rounded-full bg-[conic-gradient(from_0deg,#9333ea,#2563eb,#059669,#ca8a04,#0284c7,#ea580c,#9333ea)] opacity-70 group-hover:opacity-100 group-hover:rotate-[180deg] transition-all duration-700 ease-in-out"></div>
+                    
+                    {/* Inner Hub */}
+                    <div className="absolute inset-[3px] rounded-full bg-white dark:bg-slate-900 z-10 flex items-center justify-center border border-slate-100 dark:border-white/10 group-hover:border-transparent transition-colors">
+                       <LayoutGrid size={20} className="text-slate-500 dark:text-slate-400 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors duration-300" strokeWidth={2.5} />
+                    </div>
+                  </button>
+                </>
+              )}
           </div>
 
           {/* CENTER: Live Clock & Date (Desktop Only) */}
-          <div className="hidden lg:flex absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 items-center gap-6 px-6 py-2 rounded-full bg-slate-100/50 dark:bg-slate-800/50 border border-slate-200/50 dark:border-white/5 backdrop-blur-md shadow-inner">
+          <div className="hidden xl:flex absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 items-center gap-6 px-6 py-2 rounded-full bg-slate-100/50 dark:bg-slate-800/50 border border-slate-200/50 dark:border-white/5 backdrop-blur-md shadow-inner">
              <div className="flex items-center gap-2">
                 <CalendarDays size={14} className="text-slate-500 dark:text-slate-400" />
                 <span className="text-xs font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wide">

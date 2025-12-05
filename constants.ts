@@ -1,5 +1,6 @@
 
 import { KPICategory, RatingLevel, KPIItem } from './types';
+import { UserCog, Users, Wrench, Truck, Hammer, Calculator } from 'lucide-react';
 
 // -----------------------
 // ENUMS & TYPES
@@ -22,6 +23,60 @@ export const ROLE_NAMES: Record<RoleType, string> = {
   [RoleType.WORKER]: 'Lao Động Phổ Thông',
   [RoleType.ACCOUNTANT]: 'Kế Toán / Thống Kê'
 };
+
+// -----------------------
+// MENU CONFIGURATION
+// -----------------------
+export const MENU_ITEMS = [
+  { 
+      role: RoleType.MANAGER, 
+      icon: UserCog, 
+      label: "Quản Lý",
+      sectorHex: '#f3e8ff', // Pastel Purple
+      iconHex: '#9333ea',   // Vivid Purple
+      desc: "Giám sát & Điều hành"
+  },
+  { 
+      role: RoleType.SHIFT_LEADER, 
+      icon: Users, 
+      label: "Trưởng Ca",
+      sectorHex: '#dbeafe', // Pastel Blue
+      iconHex: '#2563eb',   // Vivid Blue
+      desc: "Quản lý ca trực"
+  },
+  { 
+      role: RoleType.OPERATOR, 
+      icon: Wrench, 
+      label: "Vận Hành",
+      sectorHex: '#d1fae5', // Pastel Emerald/Teal
+      iconHex: '#059669',   // Vivid Emerald
+      desc: "Kỹ thuật lò hơi"
+  },
+  { 
+      role: RoleType.DRIVER, 
+      icon: Truck, 
+      label: "Lái Xe",
+      sectorHex: '#fef9c3', // Pastel Yellow
+      iconHex: '#ca8a04',   // Vivid Yellow
+      desc: "Vận chuyển hàng"
+  },
+  { 
+      role: RoleType.WORKER, 
+      icon: Hammer, 
+      label: "LĐPT",
+      sectorHex: '#e0f2fe', // Pastel Sky/Cyan
+      iconHex: '#0284c7',   // Vivid Sky
+      desc: "Công việc chung"
+  },
+  { 
+      role: RoleType.ACCOUNTANT, 
+      icon: Calculator, 
+      label: "Kế Toán",
+      sectorHex: '#ffedd5', // Pastel Orange
+      iconHex: '#ea580c',   // Vivid Orange
+      desc: "Thống kê số liệu"
+  },
+];
 
 // -----------------------
 // DATASETS

@@ -1,80 +1,84 @@
 
 import React, { useState } from 'react';
-import { UserCog, Users, Wrench, Truck, Hammer, Calculator, LogOut, ChevronRight } from 'lucide-react';
+import { UserCog, Users, Wrench, Truck, Hammer, Calculator, LogOut, ChevronRight, MousePointer2 } from 'lucide-react';
 import { RoleType } from '../constants';
 
 interface PositionMenuProps {
   onSelectRole: (role: RoleType) => void;
   currentUser?: { name: string; avatar?: string };
   onLogout: () => void;
+  onHoverRole?: (role: RoleType | null) => void;
 }
 
-// Define menu configuration outside component to prevent re-creation on render
+// Define menu configuration with Pastel Sectors and Vivid Icons
 const MENU_ITEMS = [
   { 
       role: RoleType.MANAGER, 
       icon: UserCog, 
       label: "Quản Lý",
-      color: '#818cf8', 
-      bg: 'bg-indigo-50',
-      text: 'text-indigo-600',
+      sectorHex: '#f3e8ff', // Pastel Purple
+      iconHex: '#9333ea',   // Vivid Purple
       desc: "Giám sát & Điều hành"
   },
   { 
       role: RoleType.SHIFT_LEADER, 
       icon: Users, 
       label: "Trưởng Ca",
-      color: '#60a5fa', 
-      bg: 'bg-blue-50',
-      text: 'text-blue-600',
+      sectorHex: '#dbeafe', // Pastel Blue
+      iconHex: '#2563eb',   // Vivid Blue
       desc: "Quản lý ca trực"
   },
   { 
       role: RoleType.OPERATOR, 
       icon: Wrench, 
       label: "Vận Hành",
-      color: '#34d399', 
-      bg: 'bg-emerald-50',
-      text: 'text-emerald-600',
+      sectorHex: '#d1fae5', // Pastel Emerald/Teal
+      iconHex: '#059669',   // Vivid Emerald
       desc: "Kỹ thuật lò hơi"
   },
   { 
       role: RoleType.DRIVER, 
       icon: Truck, 
       label: "Lái Xe",
-      color: '#fbbf24', 
-      bg: 'bg-amber-50',
-      text: 'text-amber-600',
+      sectorHex: '#fef9c3', // Pastel Yellow
+      iconHex: '#ca8a04',   // Vivid Yellow
       desc: "Vận chuyển hàng"
   },
   { 
       role: RoleType.WORKER, 
       icon: Hammer, 
       label: "LĐPT",
-      color: '#f472b6', 
-      bg: 'bg-pink-50',
-      text: 'text-pink-600',
+      sectorHex: '#e0f2fe', // Pastel Sky/Cyan
+      iconHex: '#0284c7',   // Vivid Sky
       desc: "Công việc chung"
   },
   { 
       role: RoleType.ACCOUNTANT, 
       icon: Calculator, 
       label: "Kế Toán",
-      color: '#a78bfa', 
-      bg: 'bg-purple-50',
-      text: 'text-purple-600',
+      sectorHex: '#ffedd5', // Pastel Orange
+      iconHex: '#ea580c',   // Vivid Orange
       desc: "Thống kê số liệu"
   },
 ];
 
-const PositionMenu: React.FC<PositionMenuProps> = ({ onSelectRole, currentUser, onLogout }) => {
+// Helper to get initials from name (e.g. "Văn Quốc Thu" -> "VT")
+const getInitials = (name: string) => {
+  if (!name) return 'VT';
+  const parts = name.trim().split(/\s+/);
+  if (parts.length === 0) return 'VT';
+  if (parts.length === 1) return parts[0].substring(0, 2).toUpperCase();
+  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+};
+
+const PositionMenu: React.FC<PositionMenuProps> = ({ onSelectRole, currentUser, onLogout, onHoverRole }) => {
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
   
-  // Configuration
+  // Adjusted configuration to prevent overflow
   const size = 500;
   const center = size / 2;
-  const outerRadius = size / 2;
-  const innerRadius = 100;
+  const outerRadius = 215; // Decreased from 250 to 215 to allow hover expansion
+  const innerRadius = 90;
   const gap = 4;
   
   const totalItems = MENU_ITEMS.length;
@@ -101,27 +105,44 @@ const PositionMenu: React.FC<PositionMenuProps> = ({ onSelectRole, currentUser, 
     return `M ${x1} ${y1} A ${outerRadius} ${outerRadius} 0 0 1 ${x2} ${y2} L ${x3} ${y3} A ${innerRadius} ${innerRadius} 0 0 0 ${x4} ${y4} Z`;
   };
 
-  return (
-    <div className="flex-1 flex flex-col items-center justify-center h-[calc(100vh-100px)] min-h-[500px] relative overflow-hidden bg-slate-50 dark:bg-[#020617] p-4">
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-indigo-500/5 rounded-full blur-[80px] pointer-events-none"></div>
+  const initials = getInitials(currentUser?.name || 'User');
 
-      <div className="relative z-10 w-full max-w-5xl mx-auto flex flex-col items-center">
+  const handleMouseEnter = (index: number, role: RoleType) => {
+    setHoveredIndex(index);
+    if (onHoverRole) onHoverRole(role);
+  };
+
+  const handleMouseLeave = () => {
+    setHoveredIndex(null);
+    if (onHoverRole) onHoverRole(null);
+  };
+
+  return (
+    <div className="w-full h-full flex flex-col items-center justify-center relative overflow-hidden p-0 sm:p-4">
+      
+      {/* Background glow specific to menu area */}
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[80%] h-[80%] bg-indigo-500/5 rounded-full blur-[80px] pointer-events-none"></div>
+
+      <div className="relative z-10 w-full max-w-4xl mx-auto flex flex-col items-center justify-center h-full">
         
-        <div className="mb-4 text-center">
-             <h2 className="text-2xl font-black text-slate-900 dark:text-white mb-2 uppercase tracking-tight">
-            Chọn Vị Trí Đánh Giá
+        {/* Menu Header - Only visible if enough height */}
+        <div className="mb-4 xl:mb-8 text-center shrink-0">
+             <h2 className="text-xl md:text-2xl font-black text-slate-900 dark:text-white mb-2 uppercase tracking-tight flex items-center justify-center gap-2">
+               <MousePointer2 size={24} className="text-indigo-500 animate-bounce" />
+               Chọn Vị Trí
             </h2>
-            <p className="text-slate-500 dark:text-slate-400 font-medium text-sm">
-            Hệ thống quản lý chỉ số hiệu suất (KPI)
+            <p className="text-slate-500 dark:text-slate-400 font-medium text-xs md:text-sm max-w-md mx-auto">
+              Di chuột vào từng mục để xem tiêu chí đánh giá bên phải
             </p>
         </div>
 
-        <div className="relative w-[300px] h-[300px] xl:w-[420px] xl:h-[420px] group/menu select-none origin-center transition-all duration-500">
+        {/* Scalable SVG Container */}
+        <div className="relative w-full max-w-[360px] md:max-w-[420px] aspect-square group/menu select-none origin-center transition-all duration-500 shrink-0">
             
             <svg 
                 viewBox={`0 0 ${size} ${size}`} 
-                className="w-full h-full drop-shadow-2xl"
-                style={{ filter: 'drop-shadow(0px 10px 20px rgba(0,0,0,0.1))' }}
+                className="w-full h-full drop-shadow-2xl overflow-visible"
+                style={{ filter: 'drop-shadow(0px 10px 30px rgba(0,0,0,0.15))' }}
             >
                 {MENU_ITEMS.map((item, index) => {
                     const isHovered = hoveredIndex === index;
@@ -129,18 +150,19 @@ const PositionMenu: React.FC<PositionMenuProps> = ({ onSelectRole, currentUser, 
                         <path
                             key={index}
                             d={createSectorPath(index)}
-                            fill={item.color}
+                            fill={item.sectorHex}
                             stroke="white" 
                             strokeWidth={gap}
-                            className="cursor-pointer transition-all duration-300 ease-out origin-center dark:stroke-slate-900"
+                            className="cursor-pointer transition-all duration-300 ease-out origin-center dark:stroke-[#020617] hover:brightness-110"
                             style={{
-                                opacity: isHovered ? 1 : 0.2,
+                                opacity: isHovered ? 1 : 0.95, 
                                 transformBox: 'fill-box',
                                 transformOrigin: 'center',
-                                transform: isHovered ? 'scale(1.05)' : 'scale(1)'
+                                transform: 'scale(1)', // REMOVED SCALING
+                                filter: isHovered ? 'drop-shadow(0px 0px 10px rgba(0,0,0,0.1))' : 'none'
                             }}
-                            onMouseEnter={() => setHoveredIndex(index)}
-                            onMouseLeave={() => setHoveredIndex(null)}
+                            onMouseEnter={() => handleMouseEnter(index, item.role)}
+                            onMouseLeave={handleMouseLeave}
                             onClick={() => onSelectRole(item.role)}
                         />
                     );
@@ -152,7 +174,8 @@ const PositionMenu: React.FC<PositionMenuProps> = ({ onSelectRole, currentUser, 
                 {MENU_ITEMS.map((item, index) => {
                     const angle = index * anglePerItem + (anglePerItem / 2);
                     const rad = (angle + rotationOffset) * (Math.PI / 180);
-                    const radiusPercent = 33; 
+                    
+                    const radiusPercent = 30.5; 
                     const left = 50 + (Math.cos(rad) * radiusPercent); 
                     const top = 50 + (Math.sin(rad) * radiusPercent);
                     const isHovered = hoveredIndex === index;
@@ -165,18 +188,21 @@ const PositionMenu: React.FC<PositionMenuProps> = ({ onSelectRole, currentUser, 
                             style={{ 
                                 left: `${left}%`, 
                                 top: `${top}%`,
-                                opacity: hoveredIndex !== null && !isHovered ? 0.5 : 1,
-                                scale: isHovered ? 1.1 : 1
+                                scale: 1, // REMOVED SCALING
+                                zIndex: isHovered ? 20 : 10
                             }}
                         >
-                            <div className="bg-white/90 dark:bg-slate-900/90 backdrop-blur-sm p-2 rounded-xl shadow-sm mb-1">
+                            <div className={`p-2.5 rounded-2xl shadow-sm mb-1 transition-all duration-300 ${isHovered ? 'bg-white shadow-xl' : 'bg-white/90 dark:bg-slate-900/90 backdrop-blur-sm'}`}>
                                 <Icon 
                                     size={20} 
-                                    className={isHovered ? '' : 'text-slate-600 dark:text-slate-300'}
-                                    style={{ color: isHovered ? item.color : undefined }}
+                                    style={{ color: item.iconHex }} 
                                 />
                             </div>
-                            <span className={`font-black text-[9px] md:text-[10px] uppercase tracking-wider bg-white/80 dark:bg-black/50 px-2 py-0.5 rounded backdrop-blur-sm ${isHovered ? 'text-slate-900 dark:text-white' : 'text-slate-600 dark:text-slate-400'}`}>
+                            <span className={`font-black text-[9px] md:text-[10px] uppercase tracking-wider px-2 py-0.5 rounded-md backdrop-blur-sm transition-all ${
+                                isHovered 
+                                ? 'bg-white text-slate-900 shadow-lg' 
+                                : 'bg-white/80 dark:bg-black/80 text-slate-600 dark:text-slate-400'
+                            }`}>
                                 {item.label}
                             </span>
                         </div>
@@ -185,23 +211,17 @@ const PositionMenu: React.FC<PositionMenuProps> = ({ onSelectRole, currentUser, 
             </div>
 
             {/* Center Hub */}
-            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[110px] h-[110px] xl:w-[130px] xl:h-[130px] flex items-center justify-center z-20">
-                <div className="absolute inset-0 rounded-full border-4 border-white dark:border-slate-800 shadow-2xl bg-white dark:bg-slate-900 z-10 flex flex-col items-center justify-center overflow-hidden group cursor-default">
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[22%] h-[22%] flex items-center justify-center z-20">
+                <div className="absolute inset-0 rounded-full border-[6px] border-[#020617] dark:border-slate-950 shadow-2xl z-10 flex flex-col items-center justify-center overflow-hidden group cursor-default bg-slate-900">
                     
                     {/* Default Center Content */}
-                    <div className="absolute inset-0 bg-slate-50 dark:bg-slate-900 flex flex-col items-center justify-center transition-opacity duration-300">
-                         {currentUser?.avatar ? (
-                            <img src={currentUser.avatar} alt="User" className="w-full h-full object-cover opacity-90" />
-                        ) : (
-                            <div className="w-full h-full bg-indigo-50 dark:bg-indigo-900/30 flex items-center justify-center text-indigo-500">
-                                <UserCog size={40} strokeWidth={1.5} />
-                            </div>
-                        )}
-                        <div className="absolute bottom-0 w-full bg-gradient-to-t from-slate-900/90 to-transparent pt-6 pb-2 px-2 text-center">
-                            <p className="text-white text-[10px] font-bold uppercase tracking-widest truncate">
-                                {currentUser?.name || 'User'}
-                            </p>
+                    <div className="absolute inset-0 bg-gradient-to-br from-red-600 to-rose-700 flex flex-col items-center justify-center transition-opacity duration-300">
+                        <div className="flex flex-col items-center justify-center">
+                            <span className="text-2xl md:text-3xl font-bold text-white tracking-tighter drop-shadow-lg leading-none">
+                                {initials}
+                            </span>
                         </div>
+                        <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-b from-white/10 to-transparent pointer-events-none"></div>
                     </div>
 
                     {/* Hover Overlay Content */}
@@ -213,16 +233,13 @@ const PositionMenu: React.FC<PositionMenuProps> = ({ onSelectRole, currentUser, 
 
         </div>
 
-        <div className="mt-6 flex flex-col items-center gap-3">
+        <div className="mt-8 flex flex-col items-center gap-3 shrink-0">
             <button 
                 onClick={onLogout}
                 className="flex items-center gap-2 text-xs font-bold text-slate-400 hover:text-rose-500 transition-colors px-5 py-2 rounded-full hover:bg-rose-50 dark:hover:bg-rose-900/20 border border-transparent hover:border-rose-200 dark:hover:border-rose-800/50"
             >
                 <LogOut size={14} /> <span>Đăng xuất hệ thống</span>
             </button>
-            <p className="text-[9px] text-slate-300 dark:text-slate-600 uppercase tracking-[0.2em]">
-                Tri Viet Biogen KPI System v2.3
-            </p>
         </div>
 
       </div>
@@ -236,18 +253,18 @@ const CenterInfo: React.FC<{ item: typeof MENU_ITEMS[0] }> = ({ item }) => {
   if (!Icon) return null;
 
   return (
-    <div className="absolute inset-0 z-20 bg-white/95 dark:bg-slate-900/95 flex flex-col items-center justify-center p-3 text-center animate-in fade-in duration-200">
-      <div className={`p-1.5 rounded-full mb-1 ${item.bg} ${item.text}`}>
-          <Icon size={18} />
+    <div className="absolute inset-0 z-20 bg-white dark:bg-slate-900 flex flex-col items-center justify-center p-2 text-center animate-in zoom-in-90 duration-200">
+      <div 
+        className="p-1 rounded-full mb-0.5"
+        style={{ backgroundColor: item.sectorHex, color: item.iconHex }}
+      >
+          <Icon size={14} />
       </div>
-      <h3 className="text-xs font-black text-slate-800 dark:text-white uppercase leading-tight mb-0.5">
+      <h3 className="text-[10px] font-black text-slate-800 dark:text-white uppercase leading-tight mb-px truncate w-full px-1">
           {item.label}
       </h3>
-      <p className="text-[9px] text-slate-500 font-medium leading-tight line-clamp-2">
-          {item.desc}
-      </p>
-      <div className="mt-1.5 text-[9px] font-bold text-indigo-500 flex items-center gap-0.5">
-          Chọn <ChevronRight size={10} />
+      <div className="mt-0.5 text-[8px] font-bold text-indigo-500 flex items-center gap-0.5">
+          Chọn <ChevronRight size={8} />
       </div>
     </div>
   );
