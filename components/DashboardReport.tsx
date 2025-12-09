@@ -25,7 +25,8 @@ interface DashboardReportProps {
   employeeInfo: EmployeeInfo;
   logoUrl: string | null;
   penaltyApplied?: boolean;
-  kpiData: KPICategory[]; // New prop
+  kpiData: KPICategory[];
+  roleName?: string; // Added prop for explicit role identification
 }
 
 const DashboardReport: React.FC<DashboardReportProps> = ({
@@ -39,7 +40,8 @@ const DashboardReport: React.FC<DashboardReportProps> = ({
   employeeInfo,
   logoUrl,
   penaltyApplied,
-  kpiData
+  kpiData,
+  roleName
 }) => {
   const [year, month] = selectedMonth.split('-');
   const reportDateObj = employeeInfo.reportDate ? new Date(employeeInfo.reportDate) : new Date();
@@ -48,7 +50,6 @@ const DashboardReport: React.FC<DashboardReportProps> = ({
 
   return (
     // ADJUSTED PADDING FOR TIGHTER MARGINS (5mm)
-    // px-[5mm] creates a balanced 0.5cm margin on left and right.
     <div className="bg-white text-slate-900 font-sans w-full px-[5mm] py-[5mm] relative box-border flex flex-col h-full min-h-[297mm]">
 
       {/* ---------------- HEADER ---------------- */}
@@ -97,9 +98,11 @@ const DashboardReport: React.FC<DashboardReportProps> = ({
               </div>
               <div className="px-3 py-1.5 flex flex-col items-center justify-center min-w-[80px]">
                 <span className="text-[8px] font-bold uppercase text-slate-400 flex items-center gap-1 mb-0.5">
-                  <Layers size={10} /> Mã biểu mẫu
+                  <Layers size={10} /> Vị trí đánh giá
                 </span>
-                <span className="font-bold text-[11px] text-slate-800 whitespace-nowrap">BM-KPI-01</span>
+                <span className="font-bold text-[11px] text-slate-800 whitespace-nowrap uppercase">
+                  {roleName || 'CHƯA XÁC ĐỊNH'}
+                </span>
               </div>
             </div>
         </div>

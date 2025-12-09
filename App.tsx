@@ -250,18 +250,17 @@ function App() {
           fullText += pageText + "\n";
       }
 
-      console.log("PDF Content extracted:", fullText);
+      console.log("PDF Content extracted length:", fullText.length);
 
       // --- PARSING LOGIC ---
       // 1. Employee Info
-      // Patterns based on the DashboardReport.tsx structure
       const nameMatch = fullText.match(/Họ và tên\s+([^\n\r]+)/i);
       const idMatch = fullText.match(/Mã nhân viên\s+([^\n\r]+)/i);
       const posMatch = fullText.match(/Chức vụ\s+([^\n\r]+)/i);
       const deptMatch = fullText.match(/Bộ phận\s+([^\n\r]+)/i);
       const dateMatch = fullText.match(/Ngày lập\s+([\d\/]+)/);
       const monthMatch = fullText.match(/THÁNG\s+(\d+\/\d+)/i);
-      const roleMatch = fullText.match(/Biểu mẫu đánh giá:\s*([^\n\r]+)/i);
+      const roleMatch = fullText.match(/Vị trí đánh giá\s+([^\n\r]+)/i);
 
       const newInfo: EmployeeInfo = { ...employeeInfo };
       if (nameMatch) newInfo.name = nameMatch[1].trim().replace(/\.+$/, '');
@@ -282,12 +281,26 @@ function App() {
 
       // 2. Identify Role
       let detectedRole = currentRole;
+      let roleFound = false;
+
+      // Primary check: Explicit Role Header (Newly Added)
       if (roleMatch) {
           const extractedRoleName = roleMatch[1].trim();
-          const roleEntry = Object.entries(ROLE_NAMES).find(([key, val]) => val.toUpperCase() === extractedRoleName.toUpperCase());
+          const roleEntry = Object.entries(ROLE_NAMES).find(([key, val]) => val.toUpperCase().includes(extractedRoleName.toUpperCase()) || extractedRoleName.toUpperCase().includes(val.toUpperCase()));
           if (roleEntry) {
             detectedRole = roleEntry[0] as RoleType;
+            roleFound = true;
           }
+      }
+
+      // Fallback check: Guess from Position/Chức vụ
+      if (!roleFound && newInfo.position) {
+         if (newInfo.position.toLowerCase().includes("lái xe")) detectedRole = RoleType.DRIVER;
+         else if (newInfo.position.toLowerCase().includes("trưởng ca")) detectedRole = RoleType.SHIFT_LEADER;
+         else if (newInfo.position.toLowerCase().includes("kế toán")) detectedRole = RoleType.ACCOUNTANT;
+         else if (newInfo.position.toLowerCase().includes("vận hành")) detectedRole = RoleType.OPERATOR;
+         else if (newInfo.position.toLowerCase().includes("lao động") || newInfo.position.toLowerCase().includes("lđpt")) detectedRole = RoleType.WORKER;
+         else if (newInfo.position.toLowerCase().includes("quản lý")) detectedRole = RoleType.MANAGER;
       }
 
       // 3. Restore Ratings
@@ -296,12 +309,18 @@ function App() {
       const newRatings: EvaluationState = {};
       const kpiDataForRole = getKPIDataByRole(detectedRole);
 
+      // Use a cursor to prevent finding the same text twice if KPI names are similar
+      let lastIndex = 0; 
+
       kpiDataForRole.forEach(cat => {
         cat.items.forEach(item => {
+          // Search for the KPI name
           const kpiNameIndex = fullText.indexOf(item.name);
+          
           if (kpiNameIndex !== -1) {
-            // Search in a window of text after the name (e.g., next 200 chars to find the rating in the table row)
-            const searchWindow = fullText.substring(kpiNameIndex, kpiNameIndex + 300);
+            // Search window: Look at the text immediately following the KPI name (e.g., next 300 chars)
+            // This captures the table cell content to the right
+            const searchWindow = fullText.substring(kpiNameIndex, kpiNameIndex + 400);
             
             let level: RatingLevel | null = null;
             let score = 0;
@@ -330,11 +349,10 @@ function App() {
         });
       });
 
-      if (window.confirm(`Đã quét được thông tin từ PDF:\n- Nhân viên: ${newInfo.name}\n- Chức vụ: ${newInfo.position}\n\nBạn có muốn nạp dữ liệu này để chỉnh sửa không?`)) {
+      if (window.confirm(`Đã quét được thông tin từ PDF:\n- Nhân viên: ${newInfo.name}\n- Chức vụ: ${newInfo.position}\n- Vị trí đánh giá: ${ROLE_NAMES[detectedRole]}\n\nBạn có muốn nạp dữ liệu này để chỉnh sửa không?`)) {
           setCurrentRole(detectedRole);
           setEmployeeInfo(newInfo);
           setRatings(newRatings);
-          alert("Đã nạp dữ liệu thành công! Bạn có thể chỉnh sửa ngay bây giờ.");
       }
 
     } catch (error) {
@@ -647,6 +665,7 @@ function App() {
                   logoUrl={companyLogo}
                   penaltyApplied={penaltyApplied}
                   kpiData={inputFormData}
+                  roleName={ROLE_NAMES[currentRole]} // Explicitly pass role name for PDF generation
                 />
             </div>
         </div>
