@@ -10,54 +10,54 @@ interface PositionMenuProps {
   onHoverRole?: (role: RoleType | null) => void;
 }
 
-// Define menu configuration with Pastel Sectors and Vivid Icons
+// Define menu configuration with Pastel Sectors and Vivid Icons (Synced with constants.ts)
 const MENU_ITEMS = [
   { 
       role: RoleType.MANAGER, 
       icon: UserCog, 
       label: "Quản Lý",
-      sectorHex: '#f3e8ff', // Pastel Purple
-      iconHex: '#9333ea',   // Vivid Purple
+      sectorHex: '#E9D5FF', // Pastel Purple
+      iconHex: '#9333EA',   // Vivid Purple
       desc: "Giám sát & Điều hành"
   },
   { 
       role: RoleType.SHIFT_LEADER, 
       icon: Users, 
       label: "Trưởng Ca",
-      sectorHex: '#dbeafe', // Pastel Blue
-      iconHex: '#2563eb',   // Vivid Blue
+      sectorHex: '#E2E8F0', // Pastel Slate
+      iconHex: '#3B82F6',   // Vivid Blue
       desc: "Quản lý ca trực"
   },
   { 
       role: RoleType.OPERATOR, 
       icon: Wrench, 
       label: "Vận Hành",
-      sectorHex: '#d1fae5', // Pastel Emerald/Teal
-      iconHex: '#059669',   // Vivid Emerald
+      sectorHex: '#DCFCE7', // Pastel Green
+      iconHex: '#16A34A',   // Vivid Green
       desc: "Kỹ thuật lò hơi"
   },
   { 
       role: RoleType.DRIVER, 
       icon: Truck, 
       label: "Lái Xe",
-      sectorHex: '#fef9c3', // Pastel Yellow
-      iconHex: '#ca8a04',   // Vivid Yellow
+      sectorHex: '#FEF3C7', // Pastel Yellow
+      iconHex: '#D97706',   // Vivid Amber
       desc: "Vận chuyển hàng"
   },
   { 
       role: RoleType.WORKER, 
       icon: Hammer, 
       label: "LĐPT",
-      sectorHex: '#e0f2fe', // Pastel Sky/Cyan
-      iconHex: '#0284c7',   // Vivid Sky
+      sectorHex: '#E0F2FE', // Pastel Sky
+      iconHex: '#0284C7',   // Vivid Sky
       desc: "Công việc chung"
   },
   { 
       role: RoleType.ACCOUNTANT, 
       icon: Calculator, 
       label: "Kế Toán",
-      sectorHex: '#ffedd5', // Pastel Orange
-      iconHex: '#ea580c',   // Vivid Orange
+      sectorHex: '#FFEDD5', // Pastel Orange
+      iconHex: '#EA580C',   // Vivid Orange
       desc: "Thống kê số liệu"
   },
 ];
@@ -150,12 +150,12 @@ const PositionMenu: React.FC<PositionMenuProps> = ({ onSelectRole, currentUser, 
                         <path
                             key={index}
                             d={createSectorPath(index)}
-                            fill={item.sectorHex}
+                            fill={isHovered ? item.iconHex : item.sectorHex}
                             stroke="white" 
                             strokeWidth={gap}
                             className="cursor-pointer transition-all duration-300 ease-out origin-center dark:stroke-[#020617] hover:brightness-110"
                             style={{
-                                opacity: isHovered ? 1 : 0.95, 
+                                opacity: 1, 
                                 transformBox: 'fill-box',
                                 transformOrigin: 'center',
                                 transform: 'scale(1)', // REMOVED SCALING
@@ -192,16 +192,16 @@ const PositionMenu: React.FC<PositionMenuProps> = ({ onSelectRole, currentUser, 
                                 zIndex: isHovered ? 20 : 10
                             }}
                         >
-                            <div className={`p-2.5 rounded-2xl shadow-sm mb-1 transition-all duration-300 ${isHovered ? 'bg-white shadow-xl' : 'bg-white/90 dark:bg-slate-900/90 backdrop-blur-sm'}`}>
+                            <div className={`p-2.5 rounded-2xl shadow-sm mb-1 transition-all duration-300 bg-transparent`}>
                                 <Icon 
                                     size={20} 
-                                    style={{ color: item.iconHex }} 
+                                    style={{ color: isHovered ? 'white' : item.iconHex }} 
                                 />
                             </div>
                             <span className={`font-black text-[9px] md:text-[10px] uppercase tracking-wider px-2 py-0.5 rounded-md backdrop-blur-sm transition-all ${
                                 isHovered 
-                                ? 'bg-white text-slate-900 shadow-lg' 
-                                : 'bg-white/80 dark:bg-black/80 text-slate-600 dark:text-slate-400'
+                                ? 'text-white drop-shadow-md' 
+                                : 'text-slate-600 dark:text-slate-400'
                             }`}>
                                 {item.label}
                             </span>

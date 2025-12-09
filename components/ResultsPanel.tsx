@@ -1,6 +1,6 @@
 
-import React, { useState } from 'react';
-import { Eye, Activity, ShieldCheck, Wrench, Users, AlertTriangle } from 'lucide-react';
+import React from 'react';
+import { Eye, Activity, ShieldCheck, Wrench, Users } from 'lucide-react';
 import { MENU_ITEMS, RoleType } from '../constants';
 
 interface CategoryScore {
@@ -24,6 +24,9 @@ interface ResultsPanelProps {
   penaltyApplied?: boolean;
   onSelectRole: (role: RoleType) => void;
   currentRole: RoleType | null;
+  hoveredRole: RoleType | null;
+  setHoveredRole: (role: RoleType | null) => void;
+  darkMode: boolean;
 }
 
 const ResultsPanel: React.FC<ResultsPanelProps> = ({ 
@@ -37,45 +40,51 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({
   onPrint,
   penaltyApplied,
   onSelectRole,
-  currentRole
+  currentRole,
+  hoveredRole,
+  setHoveredRole,
+  darkMode
 }) => {
-  const [hoveredRole, setHoveredRole] = useState<RoleType | null>(null);
-  
-  // Scoring colors
-  let rankingColor = "text-slate-400";
-  let rankingBg = "bg-slate-100 dark:bg-slate-800";
+  // Scoring colors - Neon Palette
+  let rankingColor = "text-slate-500";
+  let rankingBg = "bg-slate-800/50 border-slate-700";
   let gradientStroke = ["#94a3b8", "#64748b"]; 
+  let glowColor = "rgba(148, 163, 184, 0.5)";
   
   if (percent > 0 || penaltyApplied) {
       if (percent >= 90) { 
           rankingColor = "text-emerald-400";
-          rankingBg = "bg-emerald-500/10 border-emerald-500/20";
-          gradientStroke = ["#34d399", "#10b981"];
+          rankingBg = "bg-emerald-950/30 border-emerald-500/30";
+          gradientStroke = ["#34d399", "#059669"];
+          glowColor = "rgba(16, 185, 129, 0.6)";
       } else if (percent >= 70) {
           rankingColor = "text-blue-400";
-          rankingBg = "bg-blue-500/10 border-blue-500/20";
-          gradientStroke = ["#60a5fa", "#3b82f6"];
+          rankingBg = "bg-blue-950/30 border-blue-500/30";
+          gradientStroke = ["#60a5fa", "#2563eb"];
+          glowColor = "rgba(37, 99, 235, 0.6)";
       } else {
           rankingColor = "text-rose-400";
-          rankingBg = "bg-rose-500/10 border-rose-500/20";
-          gradientStroke = ["#fb7185", "#f43f5e"];
+          rankingBg = "bg-rose-950/30 border-rose-500/30";
+          gradientStroke = ["#fb7185", "#e11d48"];
+          glowColor = "rgba(225, 29, 72, 0.6)";
       }
   }
 
   // --- CIRCULAR MENU CALCULATIONS ---
-  // Center: 200, 200 (Total size 400x400 viewBox)
   const size = 400;
   const center = size / 2;
   
-  // Radii configuration - Fixed dimensions
-  const outerRadius = 175; 
-  const innerRadius = 95; 
-  const scoreRadius = 75; 
+  // Adjusted dimensions to increase size within the box
+  const outerRadius = 190; // Increased from 175
+  const innerRadius = 105; // Increased from 95
+  const scoreRadius = 85;  // Increased from 75
   
   const totalItems = MENU_ITEMS.length;
   const anglePerItem = 360 / totalItems;
   const rotationOffset = -90; // Start from top
-  const gap = 4; // Gap between sectors
+  
+  // Gap width (simulated by stroke)
+  const gapStrokeWidth = 4; 
 
   const createSectorPath = (index: number) => {
     const startAngle = index * anglePerItem;
@@ -102,43 +111,75 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({
 
   const getCategoryStyle = (shortName: string) => {
     switch (shortName) {
-      case "Vận hành": return { Icon: Activity, bg: "bg-indigo-500/10", text: "text-indigo-400", border: "border-indigo-500/20", bar: "bg-indigo-500", shadow: "shadow-indigo-500/10" };
-      case "An toàn": return { Icon: ShieldCheck, bg: "bg-emerald-500/10", text: "text-emerald-400", border: "border-emerald-500/20", bar: "bg-emerald-500", shadow: "shadow-emerald-500/10" };
-      case "Thiết bị": return { Icon: Wrench, bg: "bg-amber-500/10", text: "text-amber-400", border: "border-amber-500/20", bar: "bg-amber-500", shadow: "shadow-amber-500/10" };
-      case "Nhân sự": return { Icon: Users, bg: "bg-rose-500/10", text: "text-rose-400", border: "border-rose-500/20", bar: "bg-rose-500", shadow: "shadow-rose-500/10" };
-      default: return { Icon: Activity, bg: "bg-slate-800", text: "text-slate-500", border: "border-slate-700", bar: "bg-slate-500", shadow: "shadow-slate-500/10" };
+      case "Vận hành": return { Icon: Activity, accent: "indigo" };
+      case "An toàn": return { Icon: ShieldCheck, accent: "emerald" };
+      case "Thiết bị": return { Icon: Wrench, accent: "amber" };
+      case "Nhân sự": return { Icon: Users, accent: "rose" };
+      default: return { Icon: Activity, accent: "slate" };
     }
   }
 
+  // Helper map for Tailwind dynamic classes (safelist workaround)
+  const colorMap: Record<string, { bg: string, text: string, bar: string, border: string }> = {
+    indigo: { bg: "bg-indigo-500/10", text: "text-indigo-400", bar: "bg-indigo-500", border: "border-l-indigo-500" },
+    emerald: { bg: "bg-emerald-500/10", text: "text-emerald-400", bar: "bg-emerald-500", border: "border-l-emerald-500" },
+    amber: { bg: "bg-amber-500/10", text: "text-amber-400", bar: "bg-amber-500", border: "border-l-amber-500" },
+    rose: { bg: "bg-rose-500/10", text: "text-rose-400", bar: "bg-rose-500", border: "border-l-rose-500" },
+    slate: { bg: "bg-slate-500/10", text: "text-slate-400", bar: "bg-slate-500", border: "border-l-slate-500" },
+  };
+
+  // Theme-based colors
+  const bgColor = darkMode ? '#0f172a' : '#ffffff';
+  const borderColor = darkMode ? '#1e293b' : '#e2e8f0';
+  const gapColor = darkMode ? '#0f172a' : '#ffffff';
+
   return (
-    // MAIN FRAME CONTAINER
-    <div className={`h-auto min-h-[500px] xl:h-full flex flex-col bg-slate-900/80 dark:bg-[#0f172a]/80 backdrop-blur-2xl rounded-[32px] border-2 border-white/10 shadow-2xl overflow-hidden relative group transition-all duration-300 ${showPreview ? 'opacity-0 pointer-events-none' : 'opacity-100'} print:hidden`}>
+    // MAIN FRAME - HUD Style
+    <div className={`w-full h-full flex flex-col bg-white dark:bg-[#0f172a] rounded-[24px] border border-slate-200 dark:border-slate-800 shadow-2xl overflow-hidden relative group transition-all duration-300 ${showPreview ? 'opacity-0 pointer-events-none' : 'opacity-100'} print:hidden`}>
         
-        {/* Top Glow Accent */}
-        <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-white/30 to-transparent"></div>
-        <div className="absolute bottom-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-black/30 to-transparent"></div>
+        {/* Subtle Background Pattern */}
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,_var(--tw-gradient-stops))] from-slate-50 via-white to-white dark:from-slate-800/20 dark:via-[#0f172a] dark:to-[#0f172a] pointer-events-none"></div>
 
         {/* Content Container */}
-        <div className="flex-1 flex flex-col p-3 justify-between gap-0 overflow-hidden">
+        <div className="flex-1 flex flex-col p-3 md:p-4 justify-between gap-2 overflow-hidden relative z-10 h-full">
             
-            {/* Header */}
+            {/* Header - Sleek Capsule */}
             <div className="flex justify-center shrink-0 mb-1">
-                <h3 className="text-[10px] md:text-[11px] font-black text-white/90 uppercase tracking-[0.2em] leading-none border-b border-white/10 pb-2 px-4">Kết Quả KPI</h3>
+                <div className="px-4 py-1.5 rounded-full bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm flex items-center gap-2">
+                   <div className="w-1.5 h-1.5 rounded-full bg-indigo-500 animate-pulse"></div>
+                   <h3 className="text-[10px] font-bold text-slate-600 dark:text-slate-300 uppercase tracking-widest leading-none">Kết Quả KPI</h3>
+                </div>
             </div>
 
             {/* 1. HERO CIRCLE + MENU RING (Focal Point) */}
-            {/* Reduced height to prevent overflow */}
-            <div className="relative w-full flex justify-center items-center h-[220px] xl:h-[260px] shrink-0">
+            {/* Height increased slightly for larger visual */}
+            <div className="relative w-full flex justify-center items-center h-[220px] xl:h-[280px] shrink-0">
                 <div className="aspect-square h-full max-h-full flex items-center justify-center relative">
                     
                     <svg className="w-full h-full drop-shadow-2xl overflow-visible" viewBox={`0 0 ${size} ${size}`}>
-                        
+                        <defs>
+                          <linearGradient id="scoreGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                              <stop offset="0%" stopColor={gradientStroke[0]} />
+                              <stop offset="100%" stopColor={gradientStroke[1]} />
+                          </linearGradient>
+                          <filter id="neonGlow" x="-50%" y="-50%" width="200%" height="200%">
+                             <feGaussianBlur stdDeviation="2.5" result="coloredBlur"/>
+                             <feMerge>
+                                <feMergeNode in="coloredBlur"/>
+                                <feMergeNode in="SourceGraphic"/>
+                             </feMerge>
+                          </filter>
+                        </defs>
+
                         {/* --- OUTER MENU RING --- */}
                         <g className="origin-center" style={{ transformBox: 'fill-box' }}>
                            {MENU_ITEMS.map((item, index) => {
                              const isHovered = hoveredRole === item.role;
                              const isSelected = currentRole === item.role;
+                             const isActive = isSelected || isHovered;
                              
+                             const sectorPath = createSectorPath(index);
+
                              return (
                                <g key={item.role} 
                                   onClick={() => onSelectRole(item.role)}
@@ -147,14 +188,15 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({
                                   className="cursor-pointer group/sector"
                                >
                                  <path 
-                                    d={createSectorPath(index)}
-                                    fill={isSelected || isHovered ? item.iconHex : item.sectorHex}
-                                    stroke="#0f172a"
-                                    strokeWidth={gap}
-                                    className={`transition-colors duration-200 ease-out origin-center`}
+                                    d={sectorPath}
+                                    // Use PASTEL sectorHex for inactive background, VIVID iconHex for active background
+                                    fill={isActive ? item.iconHex : item.sectorHex} 
+                                    fillOpacity={1}
+                                    stroke={gapColor} 
+                                    strokeWidth={gapStrokeWidth}
+                                    className="transition-colors duration-200 ease-out origin-center"
                                     style={{
-                                      opacity: isSelected ? 1 : (isHovered ? 0.9 : 0.85),
-                                      filter: isHovered || isSelected ? 'drop-shadow(0px 0px 8px rgba(255,255,255,0.15))' : 'none'
+                                       transform: 'scale(1)' // STRICTLY FIXED SIZE - NO SCALING
                                     }}
                                  />
                                </g>
@@ -163,49 +205,42 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({
                         </g>
 
                         {/* --- INNER SCORE CIRCLE --- */}
-                        {/* Background Ring */}
                         <circle
-                        cx={center}
-                        cy={center}
-                        r={scoreRadius}
-                        fill="#0f172a" // Dark background for the hub
-                        stroke="#1e293b"
-                        strokeWidth="8"
-                        strokeLinecap="round"
+                            cx={center}
+                            cy={center}
+                            r={scoreRadius}
+                            fill={bgColor} 
+                            stroke={borderColor}
+                            strokeWidth="6"
+                            className="drop-shadow-inner transition-colors duration-300"
                         />
                         
-                        <defs>
-                          <linearGradient id="scoreGradient" x1="0%" y1="0%" x2="100%" y2="0%">
-                              <stop offset="0%" stopColor={gradientStroke[0]} />
-                              <stop offset="100%" stopColor={gradientStroke[1]} />
-                          </linearGradient>
-                        </defs>
-                        
-                        {/* Progress Ring (Rotated -90deg) */}
                         <circle
-                        cx={center}
-                        cy={center}
-                        r={scoreRadius}
-                        fill="transparent"
-                        stroke="url(#scoreGradient)"
-                        strokeWidth="8"
-                        strokeDasharray={circumference}
-                        strokeDashoffset={strokeDashoffset}
-                        strokeLinecap="round"
-                        transform={`rotate(-90 ${center} ${center})`}
-                        className="transition-all duration-1000 ease-out"
-                        style={{ filter: `drop-shadow(0px 0px 10px ${gradientStroke[1]}60)` }}
+                            cx={center}
+                            cy={center}
+                            r={scoreRadius}
+                            fill="transparent"
+                            stroke="url(#scoreGradient)"
+                            strokeWidth="6"
+                            strokeDasharray={circumference}
+                            strokeDashoffset={strokeDashoffset}
+                            strokeLinecap="round"
+                            transform={`rotate(-90 ${center} ${center})`}
+                            className="transition-all duration-1000 ease-out"
+                            style={{ 
+                                filter: `drop-shadow(0px 0px 8px ${glowColor})` 
+                            }}
                         />
                     </svg>
 
-                    {/* --- ICON & TEXT OVERLAYS FOR MENU --- */}
+                    {/* --- ICON & TEXT OVERLAYS --- */}
                     <div className="absolute inset-0 pointer-events-none">
                        {MENU_ITEMS.map((item, index) => {
                             const angle = index * anglePerItem + (anglePerItem / 2);
                             const rad = (angle + rotationOffset) * (Math.PI / 180);
                             
-                            // Optimized Label Positioning
-                            const radiusPercent = 33.75; 
+                            // Re-calculated position based on new radii (midpoint of 190 and 105 is 147.5, which is ~36.8% of 400)
+                            const radiusPercent = 36.8; 
                             
                             const left = 50 + (Math.cos(rad) * radiusPercent); 
                             const top = 50 + (Math.sin(rad) * radiusPercent);
@@ -213,34 +248,39 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({
                             const Icon = item.icon;
                             const isSelected = currentRole === item.role;
                             const isHovered = hoveredRole === item.role;
-                            
-                            // Determine text colors based on state
                             const isActive = isSelected || isHovered;
-                            const textColor = isActive ? 'text-white' : 'text-slate-900';
+                            
+                            // Color Logic for Colorful Wheel
+                            // Active: White text/icon on Vivid background
+                            // Inactive: Vivid icon + Dark text on Pastel background
                             const iconColor = isActive ? 'white' : item.iconHex;
+                            const textColor = isActive ? 'text-white' : 'text-slate-900';
 
                             return (
                                 <div 
                                     key={index}
-                                    className="absolute transform -translate-x-1/2 -translate-y-1/2 flex flex-col items-center justify-center transition-all duration-300"
+                                    className="absolute transform -translate-x-1/2 -translate-y-1/2 flex flex-col items-center justify-center transition-none"
                                     style={{ 
                                         left: `${left}%`, 
                                         top: `${top}%`,
-                                        zIndex: isSelected ? 20 : 10
+                                        zIndex: isSelected ? 20 : 10,
                                     }}
                                 >
-                                    {/* Icon */}
-                                    <div className={`p-1.5 rounded-xl transition-all duration-300 bg-transparent`}>
+                                    {/* Icon Container - Fixed Size */}
+                                    <div className={`p-1.5 rounded-xl bg-transparent`}>
                                       <Icon 
                                         size={18} // FIXED SIZE
-                                        style={{ color: iconColor }} 
+                                        style={{ 
+                                            color: iconColor,
+                                            filter: isActive && darkMode ? `drop-shadow(0 0 4px rgba(255,255,255,0.5))` : 'none'
+                                        }} 
                                         strokeWidth={2.5} 
-                                        className="drop-shadow-sm transition-colors duration-200"
+                                        className={`transition-colors duration-200`}
                                       />
                                     </div>
                                     
-                                    {/* Label */}
-                                    <div className={`mt-0.5 text-[8px] md:text-[9px] font-black uppercase tracking-tight whitespace-nowrap px-1.5 py-0.5 rounded transition-colors duration-200 ${textColor} ${isActive ? 'drop-shadow-md' : ''}`}>
+                                    {/* Label - Fixed Size */}
+                                    <div className={`mt-0.5 text-[8px] md:text-[9px] font-bold uppercase tracking-tight whitespace-nowrap px-1.5 py-0.5 rounded transition-colors duration-200 ${textColor} ${isActive ? 'drop-shadow-md' : ''}`}>
                                       {item.label}
                                     </div>
                                 </div>
@@ -248,54 +288,54 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({
                        })}
                     </div>
 
-                    {/* --- CENTER INFO --- */}
+                    {/* --- CENTER HUD INFO --- */}
                     <div className="absolute inset-0 flex flex-col items-center justify-center z-10 pointer-events-none">
-                        <span className="text-3xl md:text-4xl font-black text-white tracking-tighter drop-shadow-lg leading-none mt-1">
-                            {totalScore}
+                        <span className="text-3xl md:text-4xl font-black text-slate-900 dark:text-white tracking-tighter drop-shadow-lg leading-none mt-1 tabular-nums">
+                            {totalScore.toFixed(0)}
                         </span>
-                        <div className="text-[8px] md:text-[9px] text-slate-400 font-bold uppercase tracking-widest mb-1 md:mb-2 opacity-60">/ 100 điểm</div>
+                        <div className="text-[8px] md:text-[9px] text-slate-400 dark:text-slate-500 font-bold uppercase tracking-widest mb-1 opacity-80">/ 100</div>
                         
-                        <div className={`px-2 py-0.5 rounded-md text-[8px] md:text-[9px] font-black uppercase tracking-widest shadow-lg border backdrop-blur-md whitespace-nowrap ${rankingColor} ${rankingBg}`}>
+                        <div className={`px-2 py-0.5 rounded text-[8px] md:text-[9px] font-black uppercase tracking-widest border backdrop-blur-md whitespace-nowrap shadow-lg ${rankingColor} ${rankingBg}`}>
                             {ranking}
                         </div>
-
-                        {penaltyApplied && (
-                          <div className="absolute bottom-8 left-1/2 -translate-x-1/2 bg-rose-500/10 text-rose-500 px-2 py-0.5 rounded-full text-[8px] font-bold border border-rose-500/20 flex items-center gap-1 animate-pulse whitespace-nowrap shadow-lg shadow-rose-900/20">
-                              <AlertTriangle size={8} />
-                              <span>-30đ</span>
-                          </div>
-                        )}
                     </div>
                 </div>
             </div>
 
-            {/* 2. CATEGORY LIST - Flexible height with Scroll */}
-            <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden flex flex-col gap-1.5 justify-start py-1 no-scrollbar">
+            {/* 2. CATEGORY LIST - Professional Rows */}
+            {/* Added flex-1 and min-h-0 to ensure it takes available space and scrolls if needed */}
+            <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden flex flex-col gap-1 justify-start py-1 no-scrollbar px-1">
                 {categoryScores.map((cat) => {
-                    // Only render if this category is relevant (max > 0)
                     if (cat.max === 0) return null;
 
                     const style = getCategoryStyle(cat.shortName);
+                    const theme = colorMap[style.accent];
                     const Icon = style.Icon;
+
                     return (
-                        <div key={cat.id} className={`relative overflow-hidden rounded-xl bg-slate-800/40 border border-white/5 p-1.5 group transition-all duration-300 hover:bg-slate-800 hover:shadow-lg ${style.shadow} hover:border-${style.text.split('-')[1]}-500/30 shrink-0`}>
-                            <div className="flex items-center gap-2.5 relative z-10">
-                                <div className={`w-6 h-6 rounded-lg flex items-center justify-center shrink-0 border ${style.bg} ${style.border} ${style.text}`}>
-                                    <Icon size={14} strokeWidth={2.5} />
+                        <div key={cat.id} className={`relative rounded-r-lg ${darkMode ? theme.border : 'border-l-slate-200'} border-l-[3px] bg-gradient-to-r from-slate-100 via-slate-50 to-transparent dark:from-slate-900 dark:via-slate-900/50 dark:to-transparent p-1.5 group transition-all duration-300 hover:from-slate-200 dark:hover:from-slate-800 shrink-0`}>
+                            <div className="flex items-center gap-3 relative z-10">
+                                {/* Icon Badge */}
+                                <div className={`w-7 h-7 rounded bg-white dark:bg-slate-800/50 flex items-center justify-center shrink-0 border border-slate-200 dark:border-white/5 ${theme.text}`}>
+                                    <Icon size={14} strokeWidth={2} />
                                 </div>
-                                <div className="flex-1 min-w-0">
-                                    <div className="flex justify-between items-center mb-0.5">
-                                        <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider leading-normal group-hover:text-white transition-colors">{cat.shortName}</span>
-                                        <div className="flex items-end gap-1">
-                                            <span className="text-xs font-black text-white leading-none">
+                                
+                                {/* Info & Bar */}
+                                <div className="flex-1 min-w-0 flex flex-col justify-center gap-1">
+                                    <div className="flex justify-between items-end leading-none">
+                                        <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wide group-hover:text-slate-800 dark:group-hover:text-slate-200 transition-colors">{cat.shortName}</span>
+                                        <div className="flex items-baseline gap-1">
+                                            <span className="text-xs font-bold text-slate-900 dark:text-white tabular-nums">
                                                 {cat.score}
                                             </span>
-                                            <span className="text-[8px] text-slate-500 font-medium leading-none mb-px">/{cat.max}</span>
+                                            <span className="text-[9px] text-slate-400 dark:text-slate-600 font-medium">/{cat.max}</span>
                                         </div>
                                     </div>
-                                    <div className="h-1 w-full bg-slate-700/50 rounded-full overflow-hidden">
+                                    
+                                    {/* Sleek Progress Bar */}
+                                    <div className="h-1 w-full bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden">
                                         <div 
-                                            className={`h-full rounded-full transition-all duration-700 ease-out shadow-[0_0_8px_currentColor] ${style.bar}`}
+                                            className={`h-full rounded-full transition-all duration-700 ease-out shadow-[0_0_8px_currentColor] ${theme.bar}`}
                                             style={{ width: `${cat.percentage}%` }}
                                         ></div>
                                     </div>
@@ -306,13 +346,14 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({
                 })}
             </div>
 
-            {/* 3. Action Button */}
-            <div className="mt-1 pt-2 border-t border-white/5 shrink-0">
+            {/* 3. Action Button - Modern Primary */}
+            {/* Added shrink-0 to prevent compression */}
+            <div className="mt-auto pt-2 border-t border-slate-200 dark:border-slate-800 shrink-0">
                 <button 
                     onClick={() => setShowPreview(true)}
-                    className="w-full h-9 rounded-xl bg-white text-slate-900 font-bold text-xs uppercase tracking-widest shadow-lg shadow-indigo-500/10 hover:shadow-indigo-500/30 hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-2 group"
+                    className="w-full h-9 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs uppercase tracking-widest shadow-lg shadow-indigo-500/20 hover:shadow-indigo-500/30 transition-all flex items-center justify-center gap-2 group border border-indigo-500/50"
                 >
-                    <Eye size={14} className="group-hover:text-indigo-600 transition-colors" />
+                    <Eye size={14} className="text-indigo-200 group-hover:text-white transition-colors" />
                     <span>Xem Báo Cáo</span>
                 </button>
             </div>

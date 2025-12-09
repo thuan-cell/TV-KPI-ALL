@@ -16,64 +16,67 @@ export enum RoleType {
 }
 
 export const ROLE_NAMES: Record<RoleType, string> = {
-  [RoleType.MANAGER]: 'Quản Lý / Giám Đốc',
+  [RoleType.MANAGER]: 'Quản Lý ',
   [RoleType.SHIFT_LEADER]: 'Trưởng Ca Vận Hành',
   [RoleType.OPERATOR]: 'Nhân Viên Vận Hành',
-  [RoleType.DRIVER]: 'Lái Xe / Vận Chuyển',
+  [RoleType.DRIVER]: 'Lái Xe ',
   [RoleType.WORKER]: 'Lao Động Phổ Thông',
-  [RoleType.ACCOUNTANT]: 'Kế Toán / Thống Kê'
+  [RoleType.ACCOUNTANT]: 'Kế Toán '
 };
 
 // -----------------------
 // MENU CONFIGURATION
 // -----------------------
+// Reference Image Style:
+// sectorHex: The background color when INACTIVE (Pastel)
+// iconHex: The background color when ACTIVE (Vivid) + Icon color when Inactive
 export const MENU_ITEMS = [
   { 
       role: RoleType.MANAGER, 
       icon: UserCog, 
       label: "Quản Lý",
-      sectorHex: '#f3e8ff', // Pastel Purple
-      iconHex: '#9333ea',   // Vivid Purple
+      sectorHex: '#E9D5FF', // Pastel Purple
+      iconHex: '#9333EA',   // Vivid Purple
       desc: "Giám sát & Điều hành"
   },
   { 
       role: RoleType.SHIFT_LEADER, 
       icon: Users, 
       label: "Trưởng Ca",
-      sectorHex: '#dbeafe', // Pastel Blue
-      iconHex: '#2563eb',   // Vivid Blue
+      sectorHex: '#E2E8F0', // Pastel Slate/Blue
+      iconHex: '#3B82F6',   // Vivid Blue
       desc: "Quản lý ca trực"
   },
   { 
       role: RoleType.OPERATOR, 
       icon: Wrench, 
       label: "Vận Hành",
-      sectorHex: '#d1fae5', // Pastel Emerald/Teal
-      iconHex: '#059669',   // Vivid Emerald
+      sectorHex: '#DCFCE7', // Pastel Green
+      iconHex: '#16A34A',   // Vivid Green
       desc: "Kỹ thuật lò hơi"
   },
   { 
       role: RoleType.DRIVER, 
       icon: Truck, 
       label: "Lái Xe",
-      sectorHex: '#fef9c3', // Pastel Yellow
-      iconHex: '#ca8a04',   // Vivid Yellow
+      sectorHex: '#FEF3C7', // Pastel Yellow/Amber
+      iconHex: '#D97706',   // Vivid Amber
       desc: "Vận chuyển hàng"
   },
   { 
       role: RoleType.WORKER, 
       icon: Hammer, 
       label: "LĐPT",
-      sectorHex: '#e0f2fe', // Pastel Sky/Cyan
-      iconHex: '#0284c7',   // Vivid Sky
+      sectorHex: '#E0F2FE', // Pastel Sky
+      iconHex: '#0284C7',   // Vivid Sky
       desc: "Công việc chung"
   },
   { 
       role: RoleType.ACCOUNTANT, 
       icon: Calculator, 
       label: "Kế Toán",
-      sectorHex: '#ffedd5', // Pastel Orange
-      iconHex: '#ea580c',   // Vivid Orange
+      sectorHex: '#FFEDD5', // Pastel Orange/Beige
+      iconHex: '#EA580C',   // Vivid Orange
       desc: "Thống kê số liệu"
   },
 ];
@@ -274,7 +277,7 @@ const DATA_SHIFT_LEADER = [
                 }
             },
             {
-                name: 'Xử lý sự cố cấp ca',
+                name: 'Xử lý sự cố ',
                 maxPoints: 10,
                 checklist: ['Phản ứng nhanh khi có báo động', 'Phối hợp tốt với nhân viên bảo trì', 'Báo cáo cấp trên kịp thời'],
                 criteria: {

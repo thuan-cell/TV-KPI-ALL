@@ -6,7 +6,7 @@ import Header from './components/Header';
 import LandingPage from './components/LandingPage';
 import { EvaluationState, RatingLevel, EmployeeInfo } from './types';
 import { getKPIDataByRole, RoleType, ROLE_NAMES } from './constants';
-import { User, CreditCard, Upload, Printer, X, Calendar, Award, Star, ShieldCheck, AlertOctagon, ArrowRight, LayoutGrid } from 'lucide-react';
+import { User, CreditCard, Upload, Printer, X, Calendar, Award, Star, ShieldCheck, AlertOctagon, ArrowRight } from 'lucide-react';
 import DashboardReport from './components/DashboardReport';
 import { authService, UserAccount } from './services/authService';
 
@@ -26,8 +26,11 @@ function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [currentUser, setCurrentUser] = useState<{name: string, role: string, avatar?: string} | undefined>(undefined);
   
-  // Navigation State
-  const [currentRole, setCurrentRole] = useState<RoleType | null>(null);
+  // Navigation State - Default to MANAGER to show form immediately
+  const [currentRole, setCurrentRole] = useState<RoleType>(RoleType.MANAGER);
+  
+  // Hover State for Menu Preview
+  const [hoveredRole, setHoveredRole] = useState<RoleType | null>(null);
   
   const [showPreview, setShowPreview] = useState(false);
   
@@ -73,7 +76,7 @@ function App() {
     authService.logout();
     setIsLoggedIn(false);
     setCurrentUser(undefined);
-    setCurrentRole(null);
+    setCurrentRole(RoleType.MANAGER); // Reset to default
     setEmployeeInfo(prev => ({
         ...prev,
         name: '',
@@ -94,12 +97,6 @@ function App() {
         position: ROLE_NAMES[role].split('/')[0].trim(),
         department: role === RoleType.ACCOUNTANT ? 'Phòng Kế Toán' : 'Phân Xưởng Vận Hành'
     }));
-  };
-
-  const handleBackToMenu = () => {
-      // In new design, we don't necessarily "go back" since menu is always on right,
-      // but we can clear the selection to show the instruction placeholder
-      setCurrentRole(null);
   };
 
   const handleRate = useCallback((id: string, level: RatingLevel, score: number) => {
@@ -139,10 +136,17 @@ function App() {
     }
   };
 
-  // If no role selected, use Manager data for the result preview circle
+  // Determine which KPI data to use for Charts & Input Form
   const activeKPIData = useMemo(() => {
-    if (currentRole) return getKPIDataByRole(currentRole);
-    return getKPIDataByRole(RoleType.MANAGER);
+    // If hovering, show that role's structure (preview)
+    // If not hovering, show current selected role's structure
+    const roleToShow = hoveredRole || currentRole;
+    return getKPIDataByRole(roleToShow);
+  }, [currentRole, hoveredRole]);
+  
+  // For InputSection, we ALWAYS want the currently selected role, NOT the hovered one
+  const inputFormData = useMemo(() => {
+    return getKPIDataByRole(currentRole);
   }, [currentRole]);
 
   const { categoryScores, totalScore, maxTotalScore, percent, ranking, penaltyApplied } = useMemo(() => {
@@ -150,16 +154,21 @@ function App() {
     let maxTotalScore = 0;
     let penaltyApplied = false;
     
+    // Use activeKPIData so the charts preview update on hover
     const categoryScores = activeKPIData.map(cat => {
       let catScore = 0;
       let catMax = 0;
       cat.items.forEach(item => {
         catMax += item.maxPoints;
-        if (ratings[item.id]) {
-          catScore += ratings[item.id].actualScore;
-          if (ratings[item.id].level === RatingLevel.WEAK) {
-            penaltyApplied = true;
-          }
+        // Only sum scores if we are NOT hovering (i.e. showing actual results)
+        // OR if we are hovering the currently selected role
+        if (!hoveredRole || hoveredRole === currentRole) {
+            if (ratings[item.id]) {
+                catScore += ratings[item.id].actualScore;
+                if (ratings[item.id].level === RatingLevel.WEAK) {
+                    penaltyApplied = true;
+                }
+            }
         }
       });
       
@@ -206,7 +215,7 @@ function App() {
     }
 
     return { categoryScores, totalScore, maxTotalScore, percent, ranking, penaltyApplied };
-  }, [ratings, activeKPIData]);
+  }, [ratings, activeKPIData, hoveredRole, currentRole]);
 
   const handlePrint = () => {
     window.print();
@@ -230,8 +239,6 @@ function App() {
           userProfile={currentUser}
           onLoginClick={() => {}}
           onLogoutClick={handleLogout}
-          showBackButton={!!currentRole}
-          onBackToMenu={handleBackToMenu}
         />
       )}
 
@@ -242,36 +249,10 @@ function App() {
           /* Main Dashboard Split View */
           <div className="flex flex-col xl:flex-row xl:h-full h-auto p-4 md:p-6 gap-4 xl:gap-6">
             
-            {/* Left Panel: Input Form OR Welcome Placeholder */}
+            {/* Left Panel: Input Form */}
             <div className={`flex-1 order-2 xl:order-1 no-print min-w-0 xl:h-full h-auto flex flex-col transition-all duration-500`}>
               
-              {!currentRole ? (
-                 /* 1. WELCOME / INSTRUCTION PLACEHOLDER */
-                 <div className="w-full h-full bg-slate-900/5 dark:bg-[#0f172a]/40 backdrop-blur-xl rounded-[32px] border-2 border-white/40 dark:border-white/5 shadow-2xl relative overflow-hidden animate-in fade-in zoom-in-95 duration-500 flex flex-col items-center justify-center text-center p-8">
-                    {/* Decorative Background */}
-                    <div className="absolute inset-0 overflow-hidden">
-                        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-indigo-500/10 rounded-full blur-3xl animate-pulse-slow"></div>
-                        <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl animate-pulse-slow" style={{animationDelay: '1s'}}></div>
-                    </div>
-                    
-                    <div className="relative z-10 max-w-lg">
-                        <div className="w-20 h-20 mx-auto bg-gradient-to-br from-indigo-500 to-blue-600 rounded-3xl flex items-center justify-center shadow-2xl shadow-indigo-500/30 mb-8 rotate-3">
-                            <LayoutGrid size={40} className="text-white" />
-                        </div>
-                        <h2 className="text-3xl md:text-4xl font-black text-slate-800 dark:text-white mb-4 tracking-tight">
-                            Chọn Vị Trí Đánh Giá
-                        </h2>
-                        <p className="text-slate-500 dark:text-slate-400 text-lg font-medium leading-relaxed mb-8">
-                            Vui lòng chọn một vị trí công việc từ menu vòng tròn <span className="hidden xl:inline">bên phải</span><span className="xl:hidden">bên dưới</span> để bắt đầu quy trình đánh giá KPI.
-                        </p>
-                        <div className="flex items-center justify-center gap-2 text-indigo-500 font-bold uppercase tracking-widest text-xs animate-bounce">
-                            <span>Menu Bên Phải</span>
-                            <ArrowRight size={16} />
-                        </div>
-                    </div>
-                 </div>
-              ) : (
-                 /* 2. INPUT FORM (Scrollable) */
+                 {/* INPUT FORM (Scrollable) */}
                  <div className="xl:h-full xl:overflow-y-auto scroll-smooth custom-scrollbar pr-1">
                     <div className="space-y-6 md:space-y-8 pb-10 animate-in fade-in slide-in-from-right-4 duration-300">
                         {/* User Info Card */}
@@ -286,7 +267,7 @@ function App() {
                             <div>
                                 <h2 className="text-lg md:text-xl font-bold text-slate-800 dark:text-white leading-tight">Thông tin nhân sự</h2>
                                 <p className="text-xs md:text-sm text-slate-500 dark:text-slate-400 font-medium mt-0.5 tracking-wide flex items-center gap-1">
-                                    Biểu mẫu đánh giá: <span className="text-indigo-600 dark:text-indigo-400 font-bold uppercase">{ROLE_NAMES[currentRole]}</span>
+                                    Biểu mẫu đánh giá: <span className="text-indigo-600 dark:text-indigo-400 font-bold uppercase">{ROLE_NAMES[currentRole || RoleType.MANAGER]}</span>
                                 </p>
                             </div>
                             </div>
@@ -401,7 +382,7 @@ function App() {
                         ratings={ratings} 
                         onRate={handleRate} 
                         onNoteChange={handleNoteChange}
-                        kpiData={activeKPIData}
+                        kpiData={inputFormData}
                         />
 
                         <div className="bg-white/80 dark:bg-[#0f172a]/60 backdrop-blur-xl rounded-[24px] shadow-sm hover:shadow-xl border border-white/60 dark:border-white/5 overflow-hidden transition-all duration-300">
@@ -476,7 +457,6 @@ function App() {
                         </div>
                     </div>
                  </div>
-              )}
             </div>
 
             {/* Right Panel: Results & Menu (Always visible) */}
@@ -494,6 +474,9 @@ function App() {
                       penaltyApplied={penaltyApplied}
                       onSelectRole={handleRoleSelect}
                       currentRole={currentRole}
+                      hoveredRole={hoveredRole}
+                      setHoveredRole={setHoveredRole}
+                      darkMode={darkMode}
                    />
                </div>
             </div>
@@ -535,7 +518,7 @@ function App() {
                   employeeInfo={employeeInfo}
                   logoUrl={companyLogo}
                   penaltyApplied={penaltyApplied}
-                  kpiData={activeKPIData}
+                  kpiData={inputFormData}
                 />
             </div>
         </div>

@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { Sun, Moon, ChevronDown, User, LogOut, Settings, Flame, BarChart3, Bell, Clock, CalendarDays, LayoutGrid } from 'lucide-react';
+import { Sun, Moon, ChevronDown, User, LogOut, Settings, Flame, BarChart3, Bell, Clock, CalendarDays } from 'lucide-react';
 
 interface HeaderProps {
   darkMode: boolean;
@@ -9,8 +9,6 @@ interface HeaderProps {
   userProfile?: { name: string; role: string; avatar?: string };
   onLoginClick: () => void;
   onLogoutClick: () => void;
-  showBackButton?: boolean;
-  onBackToMenu?: () => void;
 }
 
 const Header: React.FC<HeaderProps> = ({ 
@@ -20,8 +18,6 @@ const Header: React.FC<HeaderProps> = ({
   userProfile, 
   onLoginClick,
   onLogoutClick,
-  showBackButton,
-  onBackToMenu
 }) => {
   const [currentTime, setCurrentTime] = useState(new Date());
 
@@ -59,7 +55,7 @@ const Header: React.FC<HeaderProps> = ({
           {/* Decor: Top highlight */}
           <div className="absolute top-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-indigo-500/30 to-transparent"></div>
 
-          {/* LEFT: Branding & Navigation */}
+          {/* LEFT: Branding */}
           <div className="flex items-center gap-6">
               {/* Logo Section */}
               <div className="flex items-center gap-4">
@@ -78,26 +74,6 @@ const Header: React.FC<HeaderProps> = ({
                       </h1>
                   </div>
               </div>
-
-              {/* Back to Menu Button (Circular Style) */}
-              {showBackButton && (
-                <>
-                  <div className="h-8 w-px bg-slate-200 dark:bg-white/10 hidden lg:block"></div>
-                  <button 
-                    onClick={onBackToMenu}
-                    className="relative group w-11 h-11 flex items-center justify-center rounded-full transition-all duration-500 hover:scale-110 active:scale-95 shadow-md hover:shadow-xl hover:shadow-indigo-500/20"
-                    title="Quay lại menu chọn vị trí"
-                  >
-                    {/* Conic Gradient Ring mimicking the main menu colors */}
-                    <div className="absolute inset-0 rounded-full bg-[conic-gradient(from_0deg,#9333ea,#2563eb,#059669,#ca8a04,#0284c7,#ea580c,#9333ea)] opacity-70 group-hover:opacity-100 group-hover:rotate-[180deg] transition-all duration-700 ease-in-out"></div>
-                    
-                    {/* Inner Hub */}
-                    <div className="absolute inset-[3px] rounded-full bg-white dark:bg-slate-900 z-10 flex items-center justify-center border border-slate-100 dark:border-white/10 group-hover:border-transparent transition-colors">
-                       <LayoutGrid size={20} className="text-slate-500 dark:text-slate-400 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors duration-300" strokeWidth={2.5} />
-                    </div>
-                  </button>
-                </>
-              )}
           </div>
 
           {/* CENTER: Live Clock & Date (Desktop Only) */}
