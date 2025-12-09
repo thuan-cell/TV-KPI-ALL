@@ -4,11 +4,18 @@ import InputSection from './components/InputSection';
 import ResultsPanel from './components/ResultsPanel';
 import Header from './components/Header';
 import LandingPage from './components/LandingPage';
-import { EvaluationState, RatingLevel, EmployeeInfo } from './types';
+import { EvaluationState, RatingLevel, EmployeeInfo, SavedReport } from './types';
 import { getKPIDataByRole, RoleType, ROLE_NAMES } from './constants';
-import { User, CreditCard, Upload, Printer, X, Calendar, Award, Star, ShieldCheck, AlertOctagon, ArrowRight } from 'lucide-react';
+import { User, CreditCard, Upload, Printer, X, Calendar, Award, Star, ShieldCheck, AlertOctagon, ArrowRight, Trash2, Edit } from 'lucide-react';
 import DashboardReport from './components/DashboardReport';
 import { authService, UserAccount } from './services/authService';
+
+// Add type definition for window.pdfjsLib
+declare global {
+  interface Window {
+    pdfjsLib: any;
+  }
+}
 
 function App() {
   const [ratings, setRatings] = useState<EvaluationState>({});
@@ -26,7 +33,7 @@ function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [currentUser, setCurrentUser] = useState<{name: string, role: string, avatar?: string} | undefined>(undefined);
   
-  // Navigation State - Default to MANAGER to show form immediately
+  // Navigation State
   const [currentRole, setCurrentRole] = useState<RoleType>(RoleType.MANAGER);
   
   // Hover State for Menu Preview
@@ -217,6 +224,125 @@ function App() {
     return { categoryScores, totalScore, maxTotalScore, percent, ranking, penaltyApplied };
   }, [ratings, activeKPIData, hoveredRole, currentRole]);
 
+  // --- IMPORT PDF FUNCTIONALITY ---
+  const handleImportPDF = async (file: File) => {
+    // 1. Validation
+    if (file.type !== 'application/pdf' && !file.name.toLowerCase().endsWith('.pdf')) {
+        alert("Vui lòng chọn file PDF báo cáo.");
+        return;
+    }
+
+    if (!window.pdfjsLib) {
+      alert("Thư viện đọc PDF chưa sẵn sàng. Vui lòng tải lại trang.");
+      return;
+    }
+
+    try {
+      const buffer = await file.arrayBuffer();
+      const pdf = await window.pdfjsLib.getDocument(buffer).promise;
+      let fullText = "";
+
+      // Extract text from all pages
+      for (let i = 1; i <= pdf.numPages; i++) {
+          const page = await pdf.getPage(i);
+          const textContent = await page.getTextContent();
+          const pageText = textContent.items.map((item: any) => item.str).join(" ");
+          fullText += pageText + "\n";
+      }
+
+      console.log("PDF Content extracted:", fullText);
+
+      // --- PARSING LOGIC ---
+      // 1. Employee Info
+      // Patterns based on the DashboardReport.tsx structure
+      const nameMatch = fullText.match(/Họ và tên\s+([^\n\r]+)/i);
+      const idMatch = fullText.match(/Mã nhân viên\s+([^\n\r]+)/i);
+      const posMatch = fullText.match(/Chức vụ\s+([^\n\r]+)/i);
+      const deptMatch = fullText.match(/Bộ phận\s+([^\n\r]+)/i);
+      const dateMatch = fullText.match(/Ngày lập\s+([\d\/]+)/);
+      const monthMatch = fullText.match(/THÁNG\s+(\d+\/\d+)/i);
+      const roleMatch = fullText.match(/Biểu mẫu đánh giá:\s*([^\n\r]+)/i);
+
+      const newInfo: EmployeeInfo = { ...employeeInfo };
+      if (nameMatch) newInfo.name = nameMatch[1].trim().replace(/\.+$/, '');
+      if (idMatch) newInfo.id = idMatch[1].trim().replace(/\.+$/, '');
+      if (posMatch) newInfo.position = posMatch[1].trim().replace(/\.+$/, '');
+      if (deptMatch) newInfo.department = deptMatch[1].trim().replace(/\.+$/, '');
+      
+      // Date correction (PDF date format DD/MM/YYYY -> YYYY-MM-DD for input)
+      if (dateMatch) {
+        const parts = dateMatch[1].split('/');
+        if (parts.length === 3) newInfo.reportDate = `${parts[2]}-${parts[1]}-${parts[0]}`;
+      }
+
+      if (monthMatch) {
+        const parts = monthMatch[1].split('/');
+        if (parts.length === 2) setSelectedMonth(`${parts[1]}-${parts[0]}`);
+      }
+
+      // 2. Identify Role
+      let detectedRole = currentRole;
+      if (roleMatch) {
+          const extractedRoleName = roleMatch[1].trim();
+          const roleEntry = Object.entries(ROLE_NAMES).find(([key, val]) => val.toUpperCase() === extractedRoleName.toUpperCase());
+          if (roleEntry) {
+            detectedRole = roleEntry[0] as RoleType;
+          }
+      }
+
+      // 3. Restore Ratings
+      // Logic: Iterate through current role's KPI items. Search for their name in PDF text.
+      // If found, look for "TỐT", "TBÌNH", "YẾU" nearby.
+      const newRatings: EvaluationState = {};
+      const kpiDataForRole = getKPIDataByRole(detectedRole);
+
+      kpiDataForRole.forEach(cat => {
+        cat.items.forEach(item => {
+          const kpiNameIndex = fullText.indexOf(item.name);
+          if (kpiNameIndex !== -1) {
+            // Search in a window of text after the name (e.g., next 200 chars to find the rating in the table row)
+            const searchWindow = fullText.substring(kpiNameIndex, kpiNameIndex + 300);
+            
+            let level: RatingLevel | null = null;
+            let score = 0;
+
+            // Prioritize searching for "TỐT" / "TBÌNH" / "YẾU"
+            // Note: DashboardReport prints "TBÌNH" for AVERAGE
+            if (searchWindow.includes("TỐT")) {
+              level = RatingLevel.GOOD;
+              score = Math.round(item.maxPoints * item.criteria[RatingLevel.GOOD].scorePercent * 100) / 100;
+            } else if (searchWindow.includes("TBÌNH") || searchWindow.includes("TB")) {
+              level = RatingLevel.AVERAGE;
+              score = Math.round(item.maxPoints * item.criteria[RatingLevel.AVERAGE].scorePercent * 100) / 100;
+            } else if (searchWindow.includes("YẾU")) {
+              level = RatingLevel.WEAK;
+              score = Math.round(item.maxPoints * item.criteria[RatingLevel.WEAK].scorePercent * 100) / 100;
+            }
+
+            if (level) {
+              newRatings[item.id] = {
+                level: level,
+                actualScore: score,
+                notes: "" // Notes parsing is unreliable in raw text stream
+              };
+            }
+          }
+        });
+      });
+
+      if (window.confirm(`Đã quét được thông tin từ PDF:\n- Nhân viên: ${newInfo.name}\n- Chức vụ: ${newInfo.position}\n\nBạn có muốn nạp dữ liệu này để chỉnh sửa không?`)) {
+          setCurrentRole(detectedRole);
+          setEmployeeInfo(newInfo);
+          setRatings(newRatings);
+          alert("Đã nạp dữ liệu thành công! Bạn có thể chỉnh sửa ngay bây giờ.");
+      }
+
+    } catch (error) {
+      console.error(error);
+      alert("Lỗi khi đọc file PDF. File có thể bị hỏng hoặc không phải là bản in từ hệ thống này.");
+    }
+  };
+
   const handlePrint = () => {
     window.print();
   };
@@ -247,7 +373,7 @@ function App() {
           <LandingPage onLoginSuccess={handleLoginSuccess} />
         ) : (
           /* Main Dashboard Split View */
-          <div className="flex flex-col xl:flex-row xl:h-full h-auto p-4 md:p-6 gap-4 xl:gap-6">
+          <div className="flex flex-col xl:flex-row xl:h-full h-auto p-3 md:p-4 gap-4 xl:gap-6">
             
             {/* Left Panel: Input Form */}
             <div className={`flex-1 order-2 xl:order-1 no-print min-w-0 xl:h-full h-auto flex flex-col transition-all duration-500`}>
@@ -385,6 +511,7 @@ function App() {
                         kpiData={inputFormData}
                         />
 
+                        {/* Criteria Legend */}
                         <div className="bg-white/80 dark:bg-[#0f172a]/60 backdrop-blur-xl rounded-[24px] shadow-sm hover:shadow-xl border border-white/60 dark:border-white/5 overflow-hidden transition-all duration-300">
                         
                         {/* Header */}
@@ -477,6 +604,7 @@ function App() {
                       hoveredRole={hoveredRole}
                       setHoveredRole={setHoveredRole}
                       darkMode={darkMode}
+                      onImport={handleImportPDF}
                    />
                </div>
             </div>

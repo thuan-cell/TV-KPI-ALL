@@ -1,4 +1,5 @@
 
+
 export enum RatingLevel {
   GOOD = 'GOOD',
   AVERAGE = 'AVERAGE',
@@ -45,4 +46,15 @@ export interface EmployeeInfo {
   position: string;
   department: string;
   reportDate: string;
+}
+
+// Interface deprecated but kept for backward compatibility if needed internally
+export interface SavedReport {
+  version: string;
+  id: string;
+  timestamp: number;
+  role: string;
+  employeeInfo: EmployeeInfo;
+  ratings: EvaluationState;
+  selectedMonth: string;
 }
